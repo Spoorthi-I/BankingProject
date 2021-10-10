@@ -1,0 +1,512 @@
+#include<iostream>
+#include<fstream>
+#include<cstdlib>
+#include<ctime>
+#include<sstream>
+#include<cstring>
+using namespace std;
+using std::ios;
+void DispMenu()
+{
+	cout<<"\n----Menu----\n";
+	cout<<"\nPress 1 for Adding A New Customer";
+	cout<<"\nPress 2 to Display All Acc Holders and Balance";
+	cout<<"\nPress 3 to  Delete Customer \n";
+	cout<<"\nPress 6 to Check if Account exists or Not\n";
+	cout<<"\nPress 7 to get account holder name from account number\n";
+	cout<<"\nPress 8 to get balance from account number\n";
+	cout<<"\nPress 9 to get address from account number\n";
+	cout<<"\nPress 0 to get all details from account number\n";
+	cout<<"\nPress D to Deposit Amount";
+	cout<<"\nPress W to Witdraw Amount";
+	cout<<"\nPress T to get Transaction Details \n";
+	cout<<"\nPress 5 Display the account number of last entry \n";
+	cout<<"\nPress x to end\n";
+}
+
+
+typedef struct 
+{
+	time_t time;
+	int balance;
+}TranDetails;
+
+class banking
+{
+	private:
+		char UserName[100];
+		int AccNum;
+		char AccType; /*S - Saving C-Current*/
+		int Transaction;
+		char Address[200];
+	public:
+		void CreateAccount();
+		void GetUserName();
+		void GetAccNum();
+		void GetBalance();
+		void GetAddress();
+		int RetAccNum();
+		int UpdateBalance(int);
+		void GetBalFromAccno();
+		void GetAddressFromAccno();
+		void GetAllFromAccno();
+		//	void AccoundHolderList();
+		//	void AccountNumberOfLastEntry();
+			void AccountHolderName();
+}b;
+void banking::GetBalance()
+{
+	cout<<" The Balance is "<<Transaction<<" -Rs\n";
+}
+void banking::GetAddress()
+{
+	cout<<"The address is"<<Address;
+}
+
+int banking::UpdateBalance(int tempBal)
+{
+	Transaction=Transaction+tempBal;
+	return Transaction;
+
+}
+int  banking::RetAccNum()
+{
+	return AccNum;
+
+}
+void banking::GetUserName()
+{
+	cout<<"\n Account Name :"<<UserName;
+
+}
+
+void banking::GetAccNum()
+{
+	cout<<"\n Account Number:   "<<AccNum<<"\n";
+}
+void banking::CreateAccount() 
+{
+
+	cout<<"Enter User Name\n";
+	cin>>UserName;
+	cout<<"\nEnter Address\n";
+	cin>>Address;
+	Transaction=0;
+	srand(time(0));
+	AccNum=rand();
+	cout<<"Your Account Number is \n"<<AccNum;
+}
+void addNewCustomer()
+{
+
+	banking NewCust;
+	int TempAcNum;
+	ofstream outFile;
+	outFile.open("Account.Info",ios::app);
+	NewCust.CreateAccount();
+	outFile.write(reinterpret_cast<char *> (&NewCust), sizeof(banking));
+	outFile.close();
+	TranDetails TempDetails;
+	TempDetails.time=time(NULL);
+	TempDetails.balance=0;			
+	ofstream TransactionFile;
+	TempAcNum = NewCust.RetAccNum();
+	//std::string s = std::to_string(TempAcNum);
+	ostringstream temp;
+    temp<<TempAcNum;
+    string s=temp.str();
+	//TransactionFile.open(s,ios::out|ios::cur);
+	TransactionFile.open(s.c_str(),std::ios::out|std::ios::app);
+	TransactionFile.write(reinterpret_cast<char *>(&TempDetails), sizeof(TempDetails));		
+	TransactionFile.close();	
+}
+
+void AccountNumOfLastEntry()
+{
+
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	InFile.open("Account.Info");
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+		PrevTempCustomer=TempCustomer;
+	}	
+	InFile.close();
+	cout<<"Last Entry Account Info \n";
+	PrevTempCustomer.GetUserName();
+	PrevTempCustomer.GetAccNum();
+
+
+}
+void Deposit()
+{
+	int TempAcNum,TempBalance;
+	banking TempCustomer,PrevTempCustomer;
+	fstream InFile;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number\n";
+	cin>>TempAcNum;
+	cout<<"Searching for "<<TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{		
+		if(TempCustomer.RetAccNum()==TempAcNum)
+		{
+			cout<<"Account Found \n";
+			cout<<"Enter Deposit Amount \n";
+			cin>>TempBalance;
+			cout<<"Your Updated Balance \n";
+			TempBalance=TempCustomer.UpdateBalance(TempBalance);
+			cout<<TempBalance;
+			int pos=(-1)*static_cast<int>(sizeof(banking));
+			InFile.seekp(pos,ios::cur);
+			InFile.write(reinterpret_cast<char *> (&TempCustomer), sizeof(banking));
+			InFile.close();
+
+			TranDetails TempDetails;
+			TempDetails.time=time(NULL);
+			TempDetails.balance=TempBalance;			
+			ofstream TransactionFile;
+			//std::string s = std::to_string(TempAcNum);
+			ostringstream temp;
+    temp<<TempAcNum;
+    string s=temp.str();
+			//TransactionFile.open(s,ios::out|ios::cur);
+			TransactionFile.open(s.c_str(),std::ios::out|std::ios::app);
+			TransactionFile.write(reinterpret_cast<char *>(&TempDetails), sizeof(TempDetails));		
+			InFile.close();
+			TransactionFile.close();		
+			return;}
+	}
+
+	InFile.close();
+	cout<<"Account Not FOund";
+	return;
+
+
+}
+void WithDraw()
+{
+	int TempAcNum,TempBalance;
+	banking TempCustomer,PrevTempCustomer;
+	fstream InFile;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number\n";
+	cin>>TempAcNum;
+	cout<<"Searching for "<<TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{		
+		if(TempCustomer.RetAccNum()==TempAcNum)
+		{
+			cout<<"Account Found \n";
+			cout<<"Enter Deposit Amount \n";
+			cin>>TempBalance;
+			cout<<"Your Updated Balance \n";
+			TempBalance=TempCustomer.UpdateBalance(-TempBalance);
+			cout<<TempBalance;
+			int pos=(-1)*static_cast<int>(sizeof(banking));
+			InFile.seekp(pos,ios::cur);
+			InFile.write(reinterpret_cast<char *> (&TempCustomer), sizeof(banking));
+			InFile.close();
+
+			TranDetails TempDetails;
+			TempDetails.time=time(NULL);
+			TempDetails.balance=TempBalance;			
+			ofstream TransactionFile;
+		//	std::string s = std::to_string(TempAcNum);
+			ostringstream temp;
+    temp<<TempAcNum;
+  string s=temp.str();
+            
+			TransactionFile.open(s.c_str(),std::ios::out|std::ios::app);
+			TransactionFile.write(reinterpret_cast<char *>(&TempDetails), sizeof(TempDetails));		
+			InFile.close();
+			TransactionFile.close();		
+			return;}
+	}
+
+	InFile.close();
+	cout<<"Account Not FOund";
+	return;
+
+}
+
+void DeleteCustomer()
+{
+	int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	OutFile.open("TempFile",ios::out);
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number\n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+		if(TempCustomer.RetAccNum()==TempAcNum)
+		{
+			cout<<"Account Found \n";
+			Flag=1;
+		}
+		else
+		{
+			OutFile.write(reinterpret_cast<char *> (&TempCustomer), sizeof(banking));
+
+		}
+	}
+	if(Flag==0)
+	{
+		cout<<"Account Not FOund";
+	}
+
+	OutFile.close();
+	InFile.close();
+	remove("Account.Info");
+	rename("TempFile","Account.Info");
+
+
+}
+
+
+void DisplayAllAccDet()
+{
+
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	InFile.open("Account.Info",ios::in|ios::out);
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+		TempCustomer.GetUserName();
+		TempCustomer.GetAccNum();
+		TempCustomer.GetBalance();
+		cout<<"\nFetching address  \n";
+		TempCustomer.GetAddress();
+		cout<<"\n-------------------\n";
+	}
+
+}
+void CheckIfAccountExists()
+{
+	int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number\n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+		if(TempCustomer.RetAccNum()==TempAcNum)
+		{
+			cout<<"Account Found \n";
+			Flag=1;
+		}
+	}
+	if(Flag==0)
+	{
+		cout<<"Account Not FOund";
+	}
+
+	InFile.close();
+}
+
+
+void AccountHolderName()
+{
+	int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number to be checked \n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+	   if(TempAcNum==TempCustomer.RetAccNum())
+	   {
+	   	TempCustomer.GetUserName();
+	   break;
+	   }
+	   else
+	   {
+	   	cout<<"\n";
+	   	
+	   }
+	}
+}
+
+void GetBalFromAccno()
+{
+	int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number to be checked \n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+	   if(TempAcNum==TempCustomer.RetAccNum())
+	   {
+	   	TempCustomer.GetBalance();
+	   break;
+	   }
+	   else
+	   {
+	   	cout<<"\n";
+	   	
+	   }
+	}
+}
+
+
+
+void GetAddressFromAccno()
+{
+	int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number to be checked \n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+	   if(TempAcNum==TempCustomer.RetAccNum())
+	   {
+	   	TempCustomer.GetAddress();
+	   break;
+	   }
+	   else
+	   {
+	   	cout<<"\n";
+}
+}
+}
+		void GetAllFromAccno()
+		{
+			int TempAcNum;
+	banking TempCustomer,PrevTempCustomer;
+	ifstream InFile;
+	ofstream OutFile;
+	unsigned char Flag=0;
+	InFile.open("Account.Info",ios::in|ios::out);
+	cout<<"Enter Accont Number to be checked \n";
+	cin>>TempAcNum;
+	while(InFile.read(reinterpret_cast<char *>(&TempCustomer),sizeof(banking)))
+	{
+	   if(TempAcNum==TempCustomer.RetAccNum())
+	   {
+	   	TempCustomer.GetUserName();
+	   	cout<<"\n";
+	   	TempCustomer.GetAddress();
+	   	cout<<"\n";
+	   	TempCustomer.GetBalance();
+	   break;
+	   }
+	   else
+	   {
+	   	cout<<"\n";
+		}
+	}
+}
+void SystemCustom()
+{
+#ifdef WINDOWS
+	std::system("cls");
+#else
+	// Assume POSIX
+	std::system ("clear");
+#endif
+
+
+}
+void DisplayAllTransactions()
+{
+
+	int TempAcNum,tempcount;
+	cout<<"\n Enter Account Number \n";
+	cin>>TempAcNum;
+	ifstream TransactionFile;
+	//std::string s = std::to_string(TempAcNum);
+	ostringstream temp;
+    temp<<TempAcNum;
+    string s=temp.str();
+	//TransactionFile.open(s,ios::in);
+	TranDetails TempDetails;
+	tempcount=0;
+	while(TransactionFile.read(reinterpret_cast<char *>(&TempDetails), sizeof(TempDetails)))
+	{		
+		cout<<"Transaction Num "<<tempcount<<"\n";
+		tempcount++;
+		cout<<"Transaction Time "<<TempDetails.time<<"\n";
+		cout<<"Transaction Balance "<<TempDetails.balance<<"\n";
+	}	
+	TransactionFile.close();
+
+
+}
+
+int main()
+{
+	char InOpt;
+	SystemCustom();
+	do
+	{
+		//	system("CLEAR")  ;
+		DispMenu();
+		cin>>InOpt;
+
+		SystemCustom()  ;
+		switch(InOpt)
+		{
+			case '1':
+				cout<<"\n Creating new Account\n";
+				addNewCustomer();
+				break;
+			case '2':
+				DisplayAllAccDet();
+				break;
+			case '3':
+				DeleteCustomer();
+				break;	
+			case '5':
+				cout<<"\n Account Number of Last Entry \n";
+				AccountNumOfLastEntry();
+				break;
+			case '6':
+				CheckIfAccountExists();
+				break;
+				case '7':
+		        AccountHolderName();
+				break;
+		    case '8':
+		    	GetBalFromAccno();
+		    	break;
+		    case '9':
+			    GetAddressFromAccno();
+			    break;
+			case '0':
+				GetAllFromAccno();
+				break;
+			case 'D': /* Deposit */
+				Deposit();
+				break;
+			case 'W': /* WithDraw */
+				WithDraw();
+				break;
+			case 'T': /* Transaction*/
+				DisplayAllTransactions();
+			default :
+				cout<<"\nEnding\n";
+		}
+		cin.get();
+	}while(InOpt!='x');
+	return 0;	
+}
+	
+
